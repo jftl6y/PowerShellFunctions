@@ -7,13 +7,19 @@ param($Request, $TriggerMetadata)
 Write-Host "PowerShell HTTP trigger function processed a request."
 
 $azureTenantId= $env:tenantID
+#$env:graphEndpoint is the Graph endpoint for the relevant cloud, e.g. graph.microsoft.com or graph.microsoft.us 
+$graphUri = "$env:graphEndpoint/v1.0"
+$graphScope = "$env:graphEndpoint/.default"
+
+
 
 $returnResult = "Success"
 try {
-    $uri = "https://login.microsoftonline.us/$azureTenantId/oauth2/v2.0/token"
+    #env:loginUri is the login endpoint for the relevant cloud, e.g. login.microsoftonline.com or login.microsoftonline.us
+    $uri = "$env:loginUri/$azureTenantId/oauth2/v2.0/token"
     $body = @{
             client_Id = "$env:clientId"
-            scope = "https://graph.microsoft.us/.default"
+            scope = "$graphScope"
             client_secret = "$env:clientSecret"
             grant_type = "client_credentials"
         }
@@ -31,11 +37,10 @@ try {
         $invitedUserEmailAddress= $Request.Body.Email
     }
     
-    $graphUri = "https://graph.microsoft.us/v1.0"
     $invitationSuffix = "/invitations"
     $invitationContentType = "application/json"
     $invitationUri = $graphUri + $invitationSuffix
-
+    
     $body = @{
         invitedUserEmailAddress = $invitedUserEmailAddress
         sendInvitationMessage = $true
@@ -43,7 +48,7 @@ try {
             messageLanguage = "en-US"
             customizedMessageBody = "$env:MessageBody"
         }
-        inviteRedirectUrl = "https://myapps.microsoft.com?tenantId="
+        inviteRedirectUrl = "$env:RedirectUri"
     }
     $body = ConvertTo-Json $body
 
